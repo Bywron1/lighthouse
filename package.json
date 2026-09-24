@@ -1,0 +1,10 @@
+{
+  "name": "lighthouse",
+  "private": true,
+  "scripts": {
+    "build": "tsc"
+  },
+  "devDependencies": {
+    "typescript": "^5.6.0"
+  }
+}

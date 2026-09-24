@@ -1,0 +1,390 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>The Lighthouse</title>
+  <style>
+    /* Each room sets its own palette and page texture on <body data-room="…"> */
+    body[data-room="stair"] {
+      /* Cold, lonely stone */
+      --bg: #1b2230;
+      --card: #252e3d;
+      --text: #dfe6ee;
+      --muted: #93a2b5;
+      --accent: #b9d0e6;
+      --warn: #e6b7a0;
+      --frame: #0e131c;
+      background-image:
+        radial-gradient(ellipse at center, transparent 40%, rgba(5, 8, 14, 0.7) 100%),
+        repeating-linear-gradient(0deg, rgba(0, 0, 0, 0.28) 0 2px, transparent 2px 44px),
+        repeating-linear-gradient(90deg, rgba(0, 0, 0, 0.2) 0 2px, transparent 2px 88px);
+    }
+    body[data-room="lamp"] {
+      /* Bright, golden awe */
+      --bg: #2a1d08;
+      --card: #3a2a10;
+      --text: #fff6df;
+      --muted: #d9bf8a;
+      --accent: #ffd35a;
+      --warn: #ffb08a;
+      --frame: #1a1204;
+      background-image:
+        radial-gradient(circle at 50% 30%, rgba(255, 200, 80, 0.35), transparent 60%),
+        repeating-conic-gradient(from 0deg at 50% 30%, rgba(255, 210, 100, 0.07) 0 6deg, transparent 6deg 12deg);
+    }
+    body[data-room="kitchen"] {
+      /* Warm, cosy firelight */
+      --bg: #2b1510;
+      --card: #3b1f17;
+      --text: #fbe9dc;
+      --muted: #d0a58c;
+      --accent: #f29a5e;
+      --warn: #ffd27a;
+      --frame: #170904;
+      background-image:
+        radial-gradient(circle at 70% 60%, rgba(240, 120, 50, 0.18), transparent 55%),
+        repeating-linear-gradient(90deg, rgba(0, 0, 0, 0.35) 0 2px, transparent 2px 72px),
+        repeating-linear-gradient(90deg, rgba(255, 220, 190, 0.03) 0 1px, transparent 1px 7px);
+    }
+    body[data-room="rocks"] {
+      /* Wild, stormy sea */
+      --bg: #0c1d24;
+      --card: #12303a;
+      --text: #e2f3f1;
+      --muted: #8fb8b8;
+      --accent: #7fe0d0;
+      --warn: #ffc27a;
+      --frame: #06121a;
+      background-image:
+        repeating-linear-gradient(105deg, rgba(200, 240, 255, 0.08) 0 1px, transparent 1px 14px),
+        linear-gradient(#0c1d24, #06121a);
+    }
+
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 16px;
+      background-color: var(--bg);
+      color: var(--text);
+      font-family: Georgia, "Times New Roman", serif;
+      transition: background-color 0.6s ease, color 0.6s ease;
+    }
+    /* Film-grain texture over the whole page */
+    body::before {
+      content: "";
+      position: fixed;
+      inset: 0;
+      pointer-events: none;
+      opacity: 0.12;
+      mix-blend-mode: overlay;
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='200' height='200'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+    }
+    main {
+      position: relative;
+      width: 100%;
+      max-width: 520px;
+      background: linear-gradient(160deg, rgba(255, 255, 255, 0.05), transparent 60%), var(--card);
+      border-radius: 12px;
+      padding: 28px;
+      box-shadow: 0 10px 40px rgba(0, 0, 0, 0.5);
+      transition: background-color 0.6s ease;
+    }
+    h1 {
+      margin: 0 0 12px;
+      color: var(--accent);
+      font-size: 1.8rem;
+      transition: color 0.6s ease;
+    }
+    p { line-height: 1.6; margin: 0 0 16px; }
+    .defs { position: absolute; }
+    /* Room content fades out, swaps, then fades back in */
+    [data-fade] { transition: opacity 0.25s ease; }
+    main.is-fading [data-fade] { opacity: 0; }
+    @media (prefers-reduced-motion: reduce) {
+      [data-fade] { transition: none; }
+    }
+    .scene {
+      margin: 0 0 16px;
+      border: 2px solid var(--frame);
+      border-radius: 8px;
+      overflow: hidden;
+      box-shadow: 0 0 0 4px rgba(255, 255, 255, 0.04);
+    }
+    .scene svg { display: block; width: 100%; height: auto; }
+    .scene svg[hidden] { display: none; }
+    .status {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+      margin: 0 0 16px;
+    }
+    .status .exits { margin: 0; }
+    .map {
+      flex-shrink: 0;
+      display: grid;
+      grid-template-columns: repeat(2, 60px);
+      grid-auto-rows: 36px;
+      gap: 4px;
+      padding: 4px;
+      border: 2px solid var(--frame);
+      border-radius: 6px;
+      background: rgba(0, 0, 0, 0.2);
+    }
+    .map-cell {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 4px;
+      font-size: 0.7rem;
+      color: var(--muted);
+      border: 1px dashed rgba(255, 255, 255, 0.2);
+      border-radius: 4px;
+      transition: background-color 0.3s ease, color 0.3s ease;
+    }
+    .map-cell[aria-current="location"] {
+      background: var(--accent);
+      color: var(--card);
+      font-weight: bold;
+      border-style: solid;
+      border-color: var(--accent);
+    }
+    .map-cell[aria-current="location"]::before {
+      content: "";
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      background: currentColor;
+    }
+    .exits { color: var(--muted); }
+    .exits strong { color: var(--text); }
+    .message {
+      min-height: 1.6em;
+      color: var(--warn);
+      font-style: italic;
+    }
+    .hint {
+      margin: 0;
+      font-size: 0.85rem;
+      color: var(--muted);
+      border-top: 1px solid rgba(255, 255, 255, 0.1);
+      padding-top: 12px;
+    }
+  </style>
+  <script src="dist/game.js" defer></script>
+</head>
+<body data-room="rocks">
+  <main>
+    <h1 id="room-name" data-fade></h1>
+
+    <!-- Shared filters, patterns and gradients used by every scene -->
+    <svg class="defs" width="0" height="0" aria-hidden="true" focusable="false">
+      <defs>
+        <!-- Hand-drawn wobble -->
+        <filter id="sketch">
+          <feTurbulence type="fractalNoise" baseFrequency="0.04" numOctaves="2" seed="3" result="noise"/>
+          <feDisplacementMap in="SourceGraphic" in2="noise" scale="3" xChannelSelector="R" yChannelSelector="G"/>
+        </filter>
+        <!-- Paper grain -->
+        <filter id="grain" x="0" y="0" width="100%" height="100%">
+          <feTurbulence type="fractalNoise" baseFrequency="0.85" numOctaves="3" stitchTiles="stitch"/>
+          <feColorMatrix type="saturate" values="0"/>
+        </filter>
+
+        <!-- Textures -->
+        <pattern id="bricks" width="40" height="20" patternUnits="userSpaceOnUse">
+          <path d="M0 0.5 H40 M0 10.5 H40 M0.5 0 V10 M20.5 10 V20" stroke="#56606d" stroke-width="1" fill="none"/>
+        </pattern>
+        <pattern id="hatch" width="6" height="6" patternUnits="userSpaceOnUse" patternTransform="rotate(45)">
+          <path d="M0 0 V6" stroke="#1f1c1a" stroke-width="1" opacity="0.5"/>
+        </pattern>
+        <pattern id="hatch-gold" width="5" height="5" patternUnits="userSpaceOnUse" patternTransform="rotate(-30)">
+          <path d="M0 0 V5" stroke="#e8a93a" stroke-width="1"/>
+        </pattern>
+        <pattern id="woodgrain" width="80" height="10" patternUnits="userSpaceOnUse">
+          <path d="M0 3 q20 -2 40 0 t40 0 M0 8 q20 2 40 0 t40 0" stroke="#2e1608" stroke-width="0.8" fill="none" opacity="0.6"/>
+        </pattern>
+        <pattern id="waves" width="24" height="12" patternUnits="userSpaceOnUse">
+          <path d="M0 6 q6 -4 12 0 t12 0" stroke="#bfe8e2" stroke-width="1" fill="none" opacity="0.55"/>
+        </pattern>
+        <pattern id="rain" width="14" height="28" patternUnits="userSpaceOnUse" patternTransform="rotate(15)">
+          <path d="M7 0 V12" stroke="#d6eef2" stroke-width="1" opacity="0.5"/>
+        </pattern>
+
+        <!-- Light and shade -->
+        <radialGradient id="vignette-cold" r="0.75">
+          <stop offset="0.5" stop-color="#0b1320" stop-opacity="0"/>
+          <stop offset="1" stop-color="#0b1320" stop-opacity="0.65"/>
+        </radialGradient>
+        <radialGradient id="vignette-warm" r="0.75">
+          <stop offset="0.55" stop-color="#2b0e04" stop-opacity="0"/>
+          <stop offset="1" stop-color="#2b0e04" stop-opacity="0.55"/>
+        </radialGradient>
+        <radialGradient id="glow-lamp">
+          <stop offset="0" stop-color="#fff8d0" stop-opacity="0.95"/>
+          <stop offset="1" stop-color="#ffd35a" stop-opacity="0"/>
+        </radialGradient>
+        <radialGradient id="glow-stove">
+          <stop offset="0" stop-color="#ffb36b" stop-opacity="0.6"/>
+          <stop offset="1" stop-color="#ff8a3d" stop-opacity="0"/>
+        </radialGradient>
+        <linearGradient id="sky-dusk" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0" stop-color="#fbe3a6"/>
+          <stop offset="1" stop-color="#f2a765"/>
+        </linearGradient>
+        <linearGradient id="sky-storm" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0" stop-color="#3f535d"/>
+          <stop offset="1" stop-color="#8aa2ac"/>
+        </linearGradient>
+      </defs>
+    </svg>
+
+    <figure class="scene" data-fade>
+      <!-- Spiral Stair: cold, lonely stone -->
+      <svg data-room="stair" viewBox="0 0 320 180" role="img" aria-label="Iron steps spiralling around a stone column in a cold, dim stairwell lit by one narrow window" hidden>
+        <g filter="url(#sketch)" stroke="#161b24" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+          <rect x="0" y="0" width="320" height="180" fill="#7f8a99" stroke="none"/>
+          <rect x="0" y="0" width="320" height="180" fill="url(#bricks)" stroke="none"/>
+          <polygon points="270,60 288,60 200,180 110,180" fill="#e9f1f7" opacity="0.3" stroke="none"/>
+          <rect x="270" y="30" width="18" height="70" rx="9" fill="#e9f1f7"/>
+          <rect x="145" y="-5" width="30" height="190" fill="#aab2bd"/>
+          <rect x="163" y="-5" width="12" height="190" fill="url(#hatch)" stroke="none"/>
+          <g fill="#454d5a">
+            <path d="M175 160 L235 154 L235 166 L175 170 Z"/>
+            <path d="M145 145 L85 139 L85 151 L145 155 Z"/>
+            <path d="M175 130 L235 124 L235 136 L175 140 Z"/>
+            <path d="M145 115 L85 109 L85 121 L145 125 Z"/>
+            <path d="M175 100 L235 94 L235 106 L175 110 Z"/>
+            <path d="M145 85 L85 79 L85 91 L145 95 Z"/>
+            <path d="M175 70 L235 64 L235 76 L175 80 Z"/>
+            <path d="M145 55 L85 49 L85 61 L145 65 Z"/>
+            <path d="M175 40 L235 34 L235 46 L175 50 Z"/>
+            <path d="M145 25 L85 19 L85 31 L145 35 Z"/>
+            <path d="M175 10 L235 4 L235 16 L175 20 Z"/>
+          </g>
+          <polyline fill="none" stroke-width="1.6" points="235,132 85,117 235,102 85,87 235,72 85,57 235,42 85,27 235,12 85,-3"/>
+          <path d="M40 150 q-6 10 2 20 M52 140 q-4 8 1 16" fill="none" stroke="#56606d" stroke-width="1.2"/>
+        </g>
+        <rect width="320" height="180" filter="url(#grain)" opacity="0.3" style="mix-blend-mode:multiply"/>
+        <rect width="320" height="180" fill="url(#vignette-cold)"/>
+      </svg>
+
+      <!-- Lamp Room: bright, golden awe -->
+      <svg data-room="lamp" viewBox="0 0 320 180" role="img" aria-label="A great glass lens blazing with golden light in front of windows over a sunset sea" hidden>
+        <g filter="url(#sketch)" stroke="#3a220c" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+          <rect x="0" y="0" width="320" height="110" fill="url(#sky-dusk)" stroke="none"/>
+          <rect x="0" y="110" width="320" height="40" fill="#b8683c" stroke="none"/>
+          <path d="M0 110 H320" fill="none"/>
+          <path d="M10 122 q10 -5 20 0 t20 0 M90 132 q10 -5 20 0 t20 0 M230 124 q10 -5 20 0 t20 0 M270 138 q10 -5 20 0" fill="none" stroke="#7a3f1f" stroke-width="1.4"/>
+          <polygon points="160,80 0,30 0,120" fill="#fff2b0" opacity="0.5" stroke="none"/>
+          <polygon points="160,80 320,30 320,120" fill="#fff2b0" opacity="0.5" stroke="none"/>
+          <polygon points="160,80 0,30 0,120" fill="url(#hatch-gold)" opacity="0.5" stroke="none"/>
+          <polygon points="160,80 320,30 320,120" fill="url(#hatch-gold)" opacity="0.5" stroke="none"/>
+          <path d="M60 0 V150 M130 0 V28 M190 0 V28 M260 0 V150" fill="none"/>
+          <rect x="0" y="150" width="320" height="30" fill="#6b4a2a"/>
+          <rect x="0" y="150" width="320" height="30" fill="url(#woodgrain)" stroke="none"/>
+          <circle cx="160" cy="80" r="75" fill="url(#glow-lamp)" stroke="none"/>
+          <path d="M140 130 L180 130 L190 150 L130 150 Z" fill="#4a3a2a"/>
+          <ellipse cx="160" cy="80" rx="38" ry="52" fill="#ffe27a"/>
+          <g fill="none" stroke-width="1.5">
+            <ellipse cx="160" cy="80" rx="28" ry="40"/>
+            <ellipse cx="160" cy="80" rx="18" ry="27"/>
+            <ellipse cx="160" cy="80" rx="8" ry="13" fill="#fffbe6"/>
+            <path d="M124 62 H196 M122 98 H198"/>
+          </g>
+          <path d="M160 18 V6 M204 38 l9 -8 M116 38 l-9 -8" fill="none" stroke="#e8a93a" stroke-width="1.8"/>
+        </g>
+        <rect width="320" height="180" filter="url(#grain)" opacity="0.18" style="mix-blend-mode:multiply"/>
+      </svg>
+
+      <!-- Keeper's Kitchen: warm, cosy firelight -->
+      <svg data-room="kitchen" viewBox="0 0 320 180" role="img" aria-label="A copper kettle on a glowing iron stove, a table set for one and dried fish hanging from a beam" hidden>
+        <g filter="url(#sketch)" stroke="#2a130a" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+          <rect x="0" y="0" width="320" height="150" fill="#c9825a" stroke="none"/>
+          <circle cx="235" cy="112" r="120" fill="url(#glow-stove)" stroke="none"/>
+          <rect x="0" y="150" width="320" height="30" fill="#7a4526"/>
+          <rect x="0" y="150" width="320" height="30" fill="url(#woodgrain)" stroke="none"/>
+          <path d="M60 150 V180 M150 150 V180 M240 150 V180" fill="none" stroke-width="1.2"/>
+          <rect x="-5" y="10" width="330" height="12" fill="#6b3f22"/>
+          <rect x="-5" y="10" width="330" height="12" fill="url(#woodgrain)" stroke="none"/>
+          <path d="M40 22 V45 M70 22 V40 M100 22 V48" fill="none" stroke-width="1.2"/>
+          <g fill="#e0b070">
+            <path d="M40 45 q8 14 0 30 q-8 -16 0 -30 Z"/>
+            <path d="M40 75 l-6 9 h12 Z"/>
+            <path d="M70 40 q8 14 0 30 q-8 -16 0 -30 Z"/>
+            <path d="M70 70 l-6 9 h12 Z"/>
+            <path d="M100 48 q8 14 0 30 q-8 -16 0 -30 Z"/>
+            <path d="M100 78 l-6 9 h12 Z"/>
+          </g>
+          <rect x="40" y="105" width="110" height="8" fill="#9a5d35"/>
+          <rect x="40" y="105" width="110" height="8" fill="url(#woodgrain)" stroke="none"/>
+          <path d="M50 113 V150 M140 113 V150" fill="none"/>
+          <ellipse cx="80" cy="103" rx="16" ry="4" fill="#fff3e3"/>
+          <path d="M101 104 V94 M98 94 v4 M104 94 v4" fill="none" stroke-width="1.4"/>
+          <rect x="114" y="92" width="12" height="12" fill="#3f6f7a"/>
+          <path d="M126 95 q6 3 0 7" fill="none" stroke-width="1.6"/>
+          <rect x="255" y="22" width="14" height="58" fill="#2a2320"/>
+          <rect x="190" y="80" width="90" height="62" fill="#2a2320"/>
+          <rect x="190" y="80" width="90" height="62" fill="url(#hatch)" stroke="none"/>
+          <path d="M196 142 V150 M274 142 V150" fill="none"/>
+          <rect x="205" y="98" width="60" height="34" fill="#f07a2a" stroke="#8d857b"/>
+          <path d="M215 132 q5 -18 10 -6 q4 -16 10 -2 q5 -18 10 -4 q4 -12 10 12 Z" fill="#ffd08a" stroke="none"/>
+          <path d="M205 80 q0 -22 17 -22 q17 0 17 22 Z" fill="#c8743e"/>
+          <path d="M237 70 l12 -9" fill="none"/>
+          <path d="M213 62 q9 -14 18 0" fill="none"/>
+          <path d="M252 56 q-5 -8 0 -16 t0 -16 M244 50 q-4 -6 0 -12 t0 -12" fill="none" stroke="#fbe9dc" stroke-width="1.4" opacity="0.7"/>
+        </g>
+        <rect width="320" height="180" filter="url(#grain)" opacity="0.35" style="mix-blend-mode:multiply"/>
+        <rect width="320" height="180" fill="url(#vignette-warm)"/>
+      </svg>
+
+      <!-- Rocks: wild, stormy sea -->
+      <svg data-room="rocks" viewBox="0 0 320 180" role="img" aria-label="Storm waves and rain lashing black rocks at the foot of the lighthouse, with gulls in the wind" hidden>
+        <g filter="url(#sketch)" stroke="#0a1418" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+          <rect x="0" y="0" width="320" height="115" fill="url(#sky-storm)" stroke="none"/>
+          <g fill="#2f3f47">
+            <path d="M120 30 q10 -22 32 -12 q14 -18 34 -4 q24 -6 26 14 q14 6 4 18 H118 q-14 -6 2 -16 Z"/>
+            <path d="M230 12 q10 -14 26 -6 q16 -10 28 4 q18 0 16 14 H232 q-10 -4 -2 -12 Z"/>
+          </g>
+          <rect x="0" y="115" width="320" height="65" fill="#2d5f6e" stroke="none"/>
+          <rect x="0" y="115" width="320" height="65" fill="url(#waves)" stroke="none"/>
+          <path d="M20 -5 L90 -5 L100 120 L10 120 Z" fill="#d9d4c8"/>
+          <path d="M16 40 L94 40 L96 65 L14 65 Z" fill="#9b3a2e"/>
+          <rect x="50" y="14" width="10" height="16" rx="3" fill="#ffd35a"/>
+          <path d="M45 120 V96 q10 -12 20 0 V120" fill="#3b3733"/>
+          <path d="M0 132 L30 110 L70 118 L110 100 L150 125 L170 142 L0 152 Z" fill="#1c2124"/>
+          <path d="M180 152 L210 128 L240 135 L270 118 L300 140 L320 132 L320 166 L180 166 Z" fill="#1c2124"/>
+          <path d="M0 132 L30 110 L70 118 L110 100 L150 125 L170 142 L0 152 Z" fill="url(#hatch)" stroke="none" opacity="0.6"/>
+          <path d="M40 120 l12 -3 M115 108 l10 6 M225 134 l10 1 M275 124 l8 5" fill="none" stroke="#bfe8e2" stroke-width="1.4"/>
+          <path d="M0 168 q10 -6 20 0 t20 0 t20 0 t20 0 t20 0 t20 0 t20 0 t20 0 t20 0 t20 0 t20 0 t20 0 t20 0 t20 0 t20 0 t20 0" fill="none" stroke-width="1.6"/>
+          <path d="M140 132 q20 -40 50 -22 q-18 -2 -22 14" fill="#e2f3f1" stroke-width="1.6"/>
+          <g fill="#ffffff" stroke="none" opacity="0.9">
+            <circle cx="160" cy="98" r="3"/>
+            <circle cx="176" cy="90" r="2.5"/>
+            <circle cx="148" cy="92" r="2"/>
+            <circle cx="196" cy="104" r="2.5"/>
+            <circle cx="210" cy="96" r="2"/>
+          </g>
+          <path d="M200 56 q8 -10 16 0 q8 -6 16 2 M258 44 q6 -8 12 0 q6 -5 12 2 M150 70 q5 -6 10 0 q5 -4 10 1" fill="none" stroke="#e2f3f1" stroke-width="1.8"/>
+        </g>
+        <rect width="320" height="180" fill="url(#rain)"/>
+        <rect width="320" height="180" filter="url(#grain)" opacity="0.3" style="mix-blend-mode:multiply"/>
+        <rect width="320" height="180" fill="url(#vignette-cold)" opacity="0.7"/>
+      </svg>
+    </figure>
+
+    <p id="room-description" data-fade></p>
+    <div class="status">
+      <p class="exits" data-fade>You can go: <strong id="room-exits"></strong></p>
+      <div id="map" class="map" role="group" aria-label="Map of the lighthouse"></div>
+    </div>
+    <p id="message" class="message" aria-live="polite"></p>
+    <p class="hint">Use the arrow keys to move.</p>
+  </main>
+</body>
+</html>
