@@ -1,8 +1,12 @@
 {
-  // Static-assets-only Worker: serves whatever is in ./site
+  "$schema": "node_modules/wrangler/config-schema.json",
+  // Same Worker name as before, so the site stays at lighthouse.bywron1.workers.dev
   "name": "lighthouse",
+  "main": ".open-next/worker.js",
   "compatibility_date": "2026-09-24",
+  "compatibility_flags": ["nodejs_compat", "global_fetch_strictly_public"],
   "assets": {
-    "directory": "./site"
+    "directory": ".open-next/assets",
+    "binding": "ASSETS"
   }
 }

@@ -1,0 +1,170 @@
+/* Each room sets its own palette and page texture on <body data-room="…"> */
+body[data-room="stair"] {
+  /* Cold, lonely stone */
+  --bg: #1b2230;
+  --card: #252e3d;
+  --text: #dfe6ee;
+  --muted: #93a2b5;
+  --accent: #b9d0e6;
+  --warn: #e6b7a0;
+  --frame: #0e131c;
+  background-image:
+    radial-gradient(ellipse at center, transparent 40%, rgba(5, 8, 14, 0.7) 100%),
+    repeating-linear-gradient(0deg, rgba(0, 0, 0, 0.28) 0 2px, transparent 2px 44px),
+    repeating-linear-gradient(90deg, rgba(0, 0, 0, 0.2) 0 2px, transparent 2px 88px);
+}
+body[data-room="lamp"] {
+  /* Bright, golden awe */
+  --bg: #2a1d08;
+  --card: #3a2a10;
+  --text: #fff6df;
+  --muted: #d9bf8a;
+  --accent: #ffd35a;
+  --warn: #ffb08a;
+  --frame: #1a1204;
+  background-image:
+    radial-gradient(circle at 50% 30%, rgba(255, 200, 80, 0.35), transparent 60%),
+    repeating-conic-gradient(from 0deg at 50% 30%, rgba(255, 210, 100, 0.07) 0 6deg, transparent 6deg 12deg);
+}
+body[data-room="kitchen"] {
+  /* Warm, cosy firelight */
+  --bg: #2b1510;
+  --card: #3b1f17;
+  --text: #fbe9dc;
+  --muted: #d0a58c;
+  --accent: #f29a5e;
+  --warn: #ffd27a;
+  --frame: #170904;
+  background-image:
+    radial-gradient(circle at 70% 60%, rgba(240, 120, 50, 0.18), transparent 55%),
+    repeating-linear-gradient(90deg, rgba(0, 0, 0, 0.35) 0 2px, transparent 2px 72px),
+    repeating-linear-gradient(90deg, rgba(255, 220, 190, 0.03) 0 1px, transparent 1px 7px);
+}
+body[data-room="rocks"] {
+  /* Wild, stormy sea */
+  --bg: #0c1d24;
+  --card: #12303a;
+  --text: #e2f3f1;
+  --muted: #8fb8b8;
+  --accent: #7fe0d0;
+  --warn: #ffc27a;
+  --frame: #06121a;
+  background-image:
+    repeating-linear-gradient(105deg, rgba(200, 240, 255, 0.08) 0 1px, transparent 1px 14px),
+    linear-gradient(#0c1d24, #06121a);
+}
+
+* { box-sizing: border-box; }
+body {
+  margin: 0;
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 16px;
+  background-color: var(--bg);
+  color: var(--text);
+  font-family: Georgia, "Times New Roman", serif;
+  transition: background-color 0.6s ease, color 0.6s ease;
+}
+/* Film-grain texture over the whole page */
+body::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  opacity: 0.12;
+  mix-blend-mode: overlay;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='200' height='200'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+}
+main {
+  position: relative;
+  width: 100%;
+  max-width: 520px;
+  background: linear-gradient(160deg, rgba(255, 255, 255, 0.05), transparent 60%), var(--card);
+  border-radius: 12px;
+  padding: 28px;
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.5);
+  transition: background-color 0.6s ease;
+}
+h1 {
+  margin: 0 0 12px;
+  color: var(--accent);
+  font-size: 2.6rem;
+  transition: color 0.6s ease;
+}
+p { line-height: 1.6; margin: 0 0 16px; }
+.defs { position: absolute; }
+/* Room content fades out, swaps, then fades back in */
+[data-fade] { transition: opacity 0.25s ease; }
+main.is-fading [data-fade] { opacity: 0; }
+@media (prefers-reduced-motion: reduce) {
+  [data-fade] { transition: none; }
+}
+.scene {
+  margin: 0 0 16px;
+  border: 2px solid var(--frame);
+  border-radius: 8px;
+  overflow: hidden;
+  box-shadow: 0 0 0 4px rgba(255, 255, 255, 0.04);
+}
+.scene svg { display: block; width: 100%; height: auto; }
+.scene svg[hidden] { display: none; }
+.status {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  margin: 0 0 16px;
+}
+.status .exits { margin: 0; }
+.map {
+  flex-shrink: 0;
+  display: grid;
+  grid-template-columns: repeat(2, 60px);
+  grid-auto-rows: 36px;
+  gap: 4px;
+  padding: 4px;
+  border: 2px solid var(--frame);
+  border-radius: 6px;
+  background: rgba(0, 0, 0, 0.2);
+}
+.map-cell {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  font-size: 0.7rem;
+  color: var(--muted);
+  border: 1px dashed rgba(255, 255, 255, 0.2);
+  border-radius: 4px;
+  transition: background-color 0.3s ease, color 0.3s ease;
+}
+.map-cell[aria-current="location"] {
+  background: var(--accent);
+  color: var(--card);
+  font-weight: bold;
+  border-style: solid;
+  border-color: var(--accent);
+}
+.map-cell[aria-current="location"]::before {
+  content: "";
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: currentColor;
+}
+.exits { color: var(--muted); }
+.exits strong { color: var(--text); }
+.message {
+  min-height: 1.6em;
+  color: var(--warn);
+  font-style: italic;
+}
+.hint {
+  margin: 0;
+  font-size: 0.85rem;
+  color: var(--muted);
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
+  padding-top: 12px;
+}
