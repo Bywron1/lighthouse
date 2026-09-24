@@ -172,6 +172,11 @@ function StairStep({ x, y, z }: { x: number; y: number; z: number }) {
 const LAMP_PANES = [[0.6, 2.9], [3.35, 5.65], [6.1, 8.4]];
 const LAMP_GLOW = project([4.5, 4.5, 2.6]);
 
+const KITCHEN_GLOW = project([7, 2, 1]);
+const KITCHEN_STEAM = project([6.2, 1.2, 3]);
+// Where each dried fish hangs below the kitchen beam, in screen pixels.
+const KITCHEN_FISH = [1.5, 3, 4.5].map((x) => project([x, 3.3, 4.6]));
+
 // Only the current room's scene is rendered.
 export function Scenes({ art }: { art: string }) {
   return (
@@ -233,44 +238,37 @@ export function Scenes({ art }: { art: string }) {
 
       {/* Keeper's Kitchen: warm, cosy firelight */}
       {art === "kitchen" && (
-        <svg data-room="kitchen" viewBox="0 0 320 180" role="img" aria-label="A copper kettle on a glowing iron stove, a table set for one and dried fish hanging from a beam">
-          <g filter="url(#sketch)" stroke="#2a130a" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
-            <rect x="0" y="0" width="320" height="150" fill="#c9825a" stroke="none"/>
-            <circle cx="235" cy="112" r="120" fill="url(#glow-stove)" stroke="none"/>
-            <rect x="0" y="150" width="320" height="30" fill="#7a4526"/>
-            <rect x="0" y="150" width="320" height="30" fill="url(#woodgrain)" stroke="none"/>
-            <path d="M60 150 V180 M150 150 V180 M240 150 V180" fill="none" strokeWidth="1.2"/>
-            <rect x="-5" y="10" width="330" height="12" fill="#6b3f22"/>
-            <rect x="-5" y="10" width="330" height="12" fill="url(#woodgrain)" stroke="none"/>
-            <path d="M40 22 V45 M70 22 V40 M100 22 V48" fill="none" strokeWidth="1.2"/>
-            <g fill="#e0b070">
-              <path d="M40 45 q8 14 0 30 q-8 -16 0 -30 Z"/>
-              <path d="M40 75 l-6 9 h12 Z"/>
-              <path d="M70 40 q8 14 0 30 q-8 -16 0 -30 Z"/>
-              <path d="M70 70 l-6 9 h12 Z"/>
-              <path d="M100 48 q8 14 0 30 q-8 -16 0 -30 Z"/>
-              <path d="M100 78 l-6 9 h12 Z"/>
+        <svg data-room="kitchen" viewBox="0 0 320 180" role="img" aria-label="A cut-away view of a warm kitchen: a copper kettle on a glowing iron stove, a table set for one and dried fish hanging from a beam">
+          <rect width="320" height="180" fill="#2b1510"/>
+          <RoomShell
+            floor={["#7a4526", "#5e3219", "#44230f"]}
+            backLeft={["#d8a07a", "#7a4526", "#b0704a"]}
+            backRight={["#d8a07a", "#c9825a", "#7a4526"]}
+          />
+          {[1.5, 3, 4.5, 6, 7.5].map((y) => (
+            <Line key={y} from={[0, y, 0]} to={[ROOM, y, 0]} stroke="#5e3219"/>
+          ))}
+          <circle cx={KITCHEN_GLOW[0]} cy={KITCHEN_GLOW[1]} r="75" fill="url(#glow-stove)"/>
+          <Block at={[5.6, 0.2, 0]} size={[2.8, 1.8, 2.2]} colours={["#3a322d", "#2a2320", "#1c1816"]}/>
+          <Face corners={[[6.1, 2, 0.4], [7.9, 2, 0.4], [7.9, 2, 1.6], [6.1, 2, 1.6]]} fill="#f07a2a"/>
+          <Face corners={[[6.4, 2, 0.5], [7.6, 2, 0.5], [7.6, 2, 1.1], [6.4, 2, 1.1]]} fill="#ffd08a"/>
+          <Cylinder at={[7.8, 0.8, 2.2]} r={0.3} h={4.3} colours={["#2a2320", "#2a2320", "#1c1816"]}/>
+          <Cylinder at={[6.4, 1.2, 2.2]} r={0.5} h={0.6} colours={["#e09a60", "#c8743e", "#9a5428"]}/>
+          <path d={`M${KITCHEN_STEAM[0]} ${KITCHEN_STEAM[1]} q-4 -6 0 -12 t0 -12 M${KITCHEN_STEAM[0] + 7} ${KITCHEN_STEAM[1] - 2} q-3 -5 0 -10 t0 -10`} fill="none" stroke="#fbe9dc" strokeWidth="1.2" strokeLinecap="round" opacity="0.6"/>
+          <Block at={[0, 2.8, 5.6]} size={[ROOM, 0.5, 0.4]} colours={["#8a5530", "#6b3f22", "#5a321a"]}/>
+          {KITCHEN_FISH.map(([x, y]) => (
+            <g key={x}>
+              <line x1={x} y1={y - 12} x2={x} y2={y} stroke="#3a1c0c" strokeWidth="0.8"/>
+              <path d={`M${x} ${y} q5 7 0 16 q-5 -9 0 -16 Z M${x} ${y + 16} l-4 5 h8 Z`} fill="#e0b070"/>
             </g>
-            <rect x="40" y="105" width="110" height="8" fill="#9a5d35"/>
-            <rect x="40" y="105" width="110" height="8" fill="url(#woodgrain)" stroke="none"/>
-            <path d="M50 113 V150 M140 113 V150" fill="none"/>
-            <ellipse cx="80" cy="103" rx="16" ry="4" fill="#fff3e3"/>
-            <path d="M101 104 V94 M98 94 v4 M104 94 v4" fill="none" strokeWidth="1.4"/>
-            <rect x="114" y="92" width="12" height="12" fill="#3f6f7a"/>
-            <path d="M126 95 q6 3 0 7" fill="none" strokeWidth="1.6"/>
-            <rect x="255" y="22" width="14" height="58" fill="#2a2320"/>
-            <rect x="190" y="80" width="90" height="62" fill="#2a2320"/>
-            <rect x="190" y="80" width="90" height="62" fill="url(#hatch)" stroke="none"/>
-            <path d="M196 142 V150 M274 142 V150" fill="none"/>
-            <rect x="205" y="98" width="60" height="34" fill="#f07a2a" stroke="#8d857b"/>
-            <path d="M215 132 q5 -18 10 -6 q4 -16 10 -2 q5 -18 10 -4 q4 -12 10 12 Z" fill="#ffd08a" stroke="none"/>
-            <path d="M205 80 q0 -22 17 -22 q17 0 17 22 Z" fill="#c8743e"/>
-            <path d="M237 70 l12 -9" fill="none"/>
-            <path d="M213 62 q9 -14 18 0" fill="none"/>
-            <path d="M252 56 q-5 -8 0 -16 t0 -16 M244 50 q-4 -6 0 -12 t0 -12" fill="none" stroke="#fbe9dc" strokeWidth="1.4" opacity="0.7"/>
-          </g>
-          <rect width="320" height="180" filter="url(#grain)" opacity="0.35" style={{ mixBlendMode: "multiply" }}/>
-          <rect width="320" height="180" fill="url(#vignette-warm)"/>
+          ))}
+          {[[1.2, 4.2], [3.55, 4.2], [1.2, 6.35], [3.55, 6.35]].map(([x, y]) => (
+            <Block key={`${x},${y}`} at={[x, y, 0]} size={[0.25, 0.25, 1.6]} colours={["#7a4526", "#6b3f22", "#4f2a14"]}/>
+          ))}
+          <Block at={[1, 4, 1.6]} size={[3, 2.8, 0.3]} colours={["#b87448", "#9a5d35", "#7a4526"]}/>
+          <Cylinder at={[2, 5.4, 1.9]} r={0.5} h={0.05} colours={["#fff3e3", "#d9c9b5", "#c4b4a0"]}/>
+          <Cylinder at={[3.2, 4.8, 1.9]} r={0.25} h={0.45} colours={["#5b8f9a", "#3f6f7a", "#2f5560"]}/>
+          <Cylinder at={[2.4, 7.8, 0]} r={0.55} h={1.1} colours={["#b87448", "#9a5d35", "#7a4526"]}/>
         </svg>
       )}
 
