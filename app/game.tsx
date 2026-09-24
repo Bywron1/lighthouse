@@ -1,7 +1,7 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
-import { capitalise, DIRECTIONS, KEYS, move, neighbour, ROOMS, START_STATE } from "./rooms";
+import { useCallback, useEffect, useRef, useState } from "react";
+import { capitalise, type Direction, DIRECTIONS, KEYS, move, neighbour, ROOMS, START_STATE } from "./rooms";
 import { SceneDefs, Scenes } from "./scenes";
 
 // Matches the CSS opacity transition on [data-fade]; skipped for reduced motion.
@@ -23,29 +23,33 @@ export default function Game() {
     document.body.dataset.room = game.room.art;
   }, [game.room]);
 
+  // Every way of moving (keys, swipes and buttons) comes through here.
+  const go = useCallback((dir: Direction) => {
+    const result = move(game, DIRECTIONS.indexOf(dir));
+    setMessage(result.message);
+    if (result.state.room === game.room) return;
+
+    const next = result.state.room;
+    setGame(result.state);
+    setFading(true);
+    window.clearTimeout(fadeTimer.current);
+    fadeTimer.current = window.setTimeout(() => {
+      setShown(next);
+      setFading(false);
+    }, fadeMs());
+  }, [game]);
+
   useEffect(() => {
     function onKeyDown(event: KeyboardEvent) {
       const dir = KEYS[event.key];
       if (!dir) return;
       event.preventDefault();
-
-      const result = move(game, DIRECTIONS.indexOf(dir));
-      setMessage(result.message);
-      if (result.state.room === game.room) return;
-
-      const next = result.state.room;
-      setGame(result.state);
-      setFading(true);
-      window.clearTimeout(fadeTimer.current);
-      fadeTimer.current = window.setTimeout(() => {
-        setShown(next);
-        setFading(false);
-      }, fadeMs());
+      go(dir);
     }
 
     document.addEventListener("keydown", onKeyDown);
     return () => document.removeEventListener("keydown", onKeyDown);
-  }, [game]);
+  }, [go]);
 
   useEffect(() => () => window.clearTimeout(fadeTimer.current), []);
 
