@@ -177,6 +177,22 @@ const KITCHEN_STEAM = project([6.2, 1.2, 3]);
 // Where each dried fish hangs below the kitchen beam, in screen pixels.
 const KITCHEN_FISH = [1.5, 3, 4.5].map((x) => project([x, 3.3, 4.6]));
 
+const ROCK: Colours = ["#46525a", "#1c2124", "#11161a"];
+// Short ripples scattered across the sea, skipping any that fall off the picture.
+const ROCKS_WAVES = Array.from({ length: 10 }, (_, row) =>
+  Array.from({ length: 10 }, (_, col): [number, number] => [col * 3.2 - 10 + (row % 2) * 1.6, row * 3.2 - 10]),
+).flat().filter((corner) => {
+  const [x, y] = project([...corner, 0]);
+  return x > -20 && x < 340 && y > -10 && y < 190;
+});
+const ROCKS_DOOR = project([5.3, 3.9, 1.5]);
+
+// White water breaking against the rocks.
+function Foam({ at }: { at: Point }) {
+  const [x, y] = project(at);
+  return <ellipse cx={x} cy={y} rx="9" ry="3.5" fill="#e2f3f1" opacity="0.75"/>;
+}
+
 // Only the current room's scene is rendered.
 export function Scenes({ art }: { art: string }) {
   return (
@@ -274,37 +290,30 @@ export function Scenes({ art }: { art: string }) {
 
       {/* Rocks: wild, stormy sea */}
       {art === "rocks" && (
-        <svg data-room="rocks" viewBox="0 0 320 180" role="img" aria-label="Storm waves and rain lashing black rocks at the foot of the lighthouse, with gulls in the wind">
-          <g filter="url(#sketch)" stroke="#0a1418" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
-            <rect x="0" y="0" width="320" height="115" fill="url(#sky-storm)" stroke="none"/>
-            <g fill="#2f3f47">
-              <path d="M120 30 q10 -22 32 -12 q14 -18 34 -4 q24 -6 26 14 q14 6 4 18 H118 q-14 -6 2 -16 Z"/>
-              <path d="M230 12 q10 -14 26 -6 q16 -10 28 4 q18 0 16 14 H232 q-10 -4 -2 -12 Z"/>
-            </g>
-            <rect x="0" y="115" width="320" height="65" fill="#2d5f6e" stroke="none"/>
-            <rect x="0" y="115" width="320" height="65" fill="url(#waves)" stroke="none"/>
-            <path d="M20 -5 L90 -5 L100 120 L10 120 Z" fill="#d9d4c8"/>
-            <path d="M16 40 L94 40 L96 65 L14 65 Z" fill="#9b3a2e"/>
-            <rect x="50" y="14" width="10" height="16" rx="3" fill="#ffd35a"/>
-            <path d="M45 120 V96 q10 -12 20 0 V120" fill="#3b3733"/>
-            <path d="M0 132 L30 110 L70 118 L110 100 L150 125 L170 142 L0 152 Z" fill="#1c2124"/>
-            <path d="M180 152 L210 128 L240 135 L270 118 L300 140 L320 132 L320 166 L180 166 Z" fill="#1c2124"/>
-            <path d="M0 132 L30 110 L70 118 L110 100 L150 125 L170 142 L0 152 Z" fill="url(#hatch)" stroke="none" opacity="0.6"/>
-            <path d="M40 120 l12 -3 M115 108 l10 6 M225 134 l10 1 M275 124 l8 5" fill="none" stroke="#bfe8e2" strokeWidth="1.4"/>
-            <path d="M0 168 q10 -6 20 0 t20 0 t20 0 t20 0 t20 0 t20 0 t20 0 t20 0 t20 0 t20 0 t20 0 t20 0 t20 0 t20 0 t20 0 t20 0" fill="none" strokeWidth="1.6"/>
-            <path d="M140 132 q20 -40 50 -22 q-18 -2 -22 14" fill="#e2f3f1" strokeWidth="1.6"/>
-            <g fill="#ffffff" stroke="none" opacity="0.9">
-              <circle cx="160" cy="98" r="3"/>
-              <circle cx="176" cy="90" r="2.5"/>
-              <circle cx="148" cy="92" r="2"/>
-              <circle cx="196" cy="104" r="2.5"/>
-              <circle cx="210" cy="96" r="2"/>
-            </g>
-            <path d="M200 56 q8 -10 16 0 q8 -6 16 2 M258 44 q6 -8 12 0 q6 -5 12 2 M150 70 q5 -6 10 0 q5 -4 10 1" fill="none" stroke="#e2f3f1" strokeWidth="1.8"/>
+        <svg data-room="rocks" viewBox="0 0 320 180" role="img" aria-label="A view from above of black rocks at the foot of the lighthouse, with a stormy sea breaking round them, rain slanting down and gulls in the wind">
+          <rect width="320" height="180" fill="#2d5f6e"/>
+          <g opacity="0.5">
+            {ROCKS_WAVES.map(([x, y]) => (
+              <Line key={`${x},${y}`} from={[x, y, 0]} to={[x + 1.2, y, 0]} stroke="#bfe8e2" width={1}/>
+            ))}
           </g>
-          <rect width="320" height="180" fill="url(#rain)"/>
-          <rect width="320" height="180" filter="url(#grain)" opacity="0.3" style={{ mixBlendMode: "multiply" }}/>
-          <rect width="320" height="180" fill="url(#vignette-cold)" opacity="0.7"/>
+          {/* The island and tower sit a little lower than the room scenes. */}
+          <g transform="translate(0 22)">
+          {[[0.4, 1.4], [5.5, 0.6], [8.4, 1.6]].map(([x, y]) => <Foam key={`${x},${y}`} at={[x, y, 0]}/>)}
+          <Block at={[0.8, 1.8, 0]} size={[1.2, 2.8, 0.9]} colours={ROCK}/>
+          <Block at={[2, 1, 0]} size={[4.5, 4, 1.5]} colours={ROCK}/>
+          <Cylinder at={[4.2, 2.8, 1.5]} r={1.5} h={14} colours={["#ffffff", "#d9d4c8", "#b3ad9f"]}/>
+          <Band at={[4.2, 2.8, 1.5]} r={1.5} from={5} to={7} fill="#9b3a2e"/>
+          <path d={`M${ROCKS_DOOR[0] - 6} ${ROCKS_DOOR[1]} v-14 a6 6 0 0 1 12 0 v14 Z`} fill="#3b3733"/>
+          <rect x={ROCKS_DOOR[0] - 3} y={ROCKS_DOOR[1] - 118} width="6" height="10" rx="2" fill="#ffd35a"/>
+          <Block at={[6.5, 1.8, 0]} size={[1.5, 2.4, 1]} colours={ROCK}/>
+          <Block at={[1, 5, 0]} size={[1.8, 1.2, 0.5]} colours={ROCK}/>
+          <Block at={[3, 5, 0]} size={[3, 1.8, 0.8]} colours={ROCK}/>
+          <Block at={[6.3, 5.2, 0]} size={[1.2, 1.2, 0.4]} colours={ROCK}/>
+          {[[0.6, 4.8], [2.2, 6.4], [4.6, 7], [7, 6.6], [8.2, 4.4]].map(([x, y]) => <Foam key={`${x},${y}`} at={[x, y, 0]}/>)}
+          </g>
+          <path d="M214 36 q6 -6 12 0 q6 -6 12 0 M252 22 q5 -5 10 0 q5 -5 10 0 M58 30 q5 -5 10 0 q5 -5 10 0" fill="none" stroke="#e2f3f1" strokeWidth="1.6" strokeLinecap="round"/>
+          <rect width="320" height="180" fill="url(#rain)" opacity="0.7"/>
         </svg>
       )}
     </>
