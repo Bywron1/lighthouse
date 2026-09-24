@@ -161,6 +161,50 @@ main.is-fading [data-fade] { opacity: 0; }
   border-radius: 50%;
   background: currentColor;
 }
+/* Tap buttons, shown only on touch screens */
+.pad {
+  display: none;
+  grid-template-columns: repeat(3, 44px);
+  grid-template-rows: repeat(3, 44px);
+  gap: 4px;
+}
+.pad button {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  color: var(--accent);
+  background: rgba(0, 0, 0, 0.2);
+  border: 2px solid var(--frame);
+  border-radius: 6px;
+  /* Quick repeated taps move again instead of zooming the page */
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
+  transition: background-color 0.3s ease, color 0.3s ease;
+}
+.pad button:active { background: var(--accent); color: var(--card); }
+.pad button:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.pad svg { width: 22px; height: 22px; fill: none; stroke: currentColor; stroke-width: 3; stroke-linecap: round; stroke-linejoin: round; }
+.pad-up { grid-area: 1 / 2; }
+.pad-left { grid-area: 2 / 1; }
+.pad-right { grid-area: 2 / 3; }
+.pad-down { grid-area: 3 / 2; }
+.pad-left svg { transform: rotate(-90deg); }
+.pad-right svg { transform: rotate(90deg); }
+.pad-down svg { transform: rotate(180deg); }
+@media (pointer: coarse) {
+  .pad { display: grid; }
+  /* The exits get their own line so the buttons and map fit side by side */
+  .status { flex-wrap: wrap; }
+  .status .exits { flex-basis: 100%; }
+}
+/* Narrow phones: a little less padding and a smaller map keeps the buttons
+   and map side by side down to 360px wide; below that the map wraps under. */
+@media (pointer: coarse) and (max-width: 420px) {
+  main { padding: 20px; }
+  .status { gap: 12px; }
+  .map { grid-template-columns: repeat(2, 56px); }
+}
 .exits { color: var(--muted); }
 .exits strong { color: var(--text); }
 .message {

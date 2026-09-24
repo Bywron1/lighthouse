@@ -93,6 +93,16 @@ export default function Game() {
         <p className="exits" data-fade="">
           You can go: <strong>{exits.join(", ")}</strong>
         </p>
+        {/* Tap buttons for touch screens, where there are no arrow keys. */}
+        <div className="pad" role="group" aria-label="Move">
+          {DIRECTIONS.map((dir) => (
+            <button key={dir} type="button" className={`pad-${dir}`} aria-label={`Go ${dir}`} onClick={() => go(dir)}>
+              <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+                <path d="M6 15 L12 9 L18 15"/>
+              </svg>
+            </button>
+          ))}
+        </div>
         <div className="map" role="group" aria-label="Map of the lighthouse">
           {ROOMS.map((room) => (
             <div
