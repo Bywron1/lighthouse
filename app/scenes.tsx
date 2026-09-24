@@ -1,50 +1,13 @@
-// Scene artwork, carried over unchanged from the prototype.
+// Scene artwork: crisp isometric cut-aways of each room, drawn as SVG.
 
-// Shared filters, patterns and gradients used by every scene
+// Shared patterns and gradients used by the scenes
 export function SceneDefs() {
   return (
     <svg className="defs" width="0" height="0" aria-hidden="true" focusable="false">
       <defs>
-        {/* Hand-drawn wobble */}
-        <filter id="sketch">
-          <feTurbulence type="fractalNoise" baseFrequency="0.04" numOctaves="2" seed="3" result="noise"/>
-          <feDisplacementMap in="SourceGraphic" in2="noise" scale="3" xChannelSelector="R" yChannelSelector="G"/>
-        </filter>
-        {/* Paper grain */}
-        <filter id="grain" x="0" y="0" width="100%" height="100%">
-          <feTurbulence type="fractalNoise" baseFrequency="0.85" numOctaves="3" stitchTiles="stitch"/>
-          <feColorMatrix type="saturate" values="0"/>
-        </filter>
-
-        {/* Textures */}
-        <pattern id="bricks" width="40" height="20" patternUnits="userSpaceOnUse">
-          <path d="M0 0.5 H40 M0 10.5 H40 M0.5 0 V10 M20.5 10 V20" stroke="#56606d" strokeWidth="1" fill="none"/>
-        </pattern>
-        <pattern id="hatch" width="6" height="6" patternUnits="userSpaceOnUse" patternTransform="rotate(45)">
-          <path d="M0 0 V6" stroke="#1f1c1a" strokeWidth="1" opacity="0.5"/>
-        </pattern>
-        <pattern id="hatch-gold" width="5" height="5" patternUnits="userSpaceOnUse" patternTransform="rotate(-30)">
-          <path d="M0 0 V5" stroke="#e8a93a" strokeWidth="1"/>
-        </pattern>
-        <pattern id="woodgrain" width="80" height="10" patternUnits="userSpaceOnUse">
-          <path d="M0 3 q20 -2 40 0 t40 0 M0 8 q20 2 40 0 t40 0" stroke="#2e1608" strokeWidth="0.8" fill="none" opacity="0.6"/>
-        </pattern>
-        <pattern id="waves" width="24" height="12" patternUnits="userSpaceOnUse">
-          <path d="M0 6 q6 -4 12 0 t12 0" stroke="#bfe8e2" strokeWidth="1" fill="none" opacity="0.55"/>
-        </pattern>
         <pattern id="rain" width="14" height="28" patternUnits="userSpaceOnUse" patternTransform="rotate(15)">
           <path d="M7 0 V12" stroke="#d6eef2" strokeWidth="1" opacity="0.5"/>
         </pattern>
-
-        {/* Light and shade */}
-        <radialGradient id="vignette-cold" r="0.75">
-          <stop offset="0.5" stopColor="#0b1320" stopOpacity="0"/>
-          <stop offset="1" stopColor="#0b1320" stopOpacity="0.65"/>
-        </radialGradient>
-        <radialGradient id="vignette-warm" r="0.75">
-          <stop offset="0.55" stopColor="#2b0e04" stopOpacity="0"/>
-          <stop offset="1" stopColor="#2b0e04" stopOpacity="0.55"/>
-        </radialGradient>
         <radialGradient id="glow-lamp">
           <stop offset="0" stopColor="#fff8d0" stopOpacity="0.95"/>
           <stop offset="1" stopColor="#ffd35a" stopOpacity="0"/>
@@ -56,10 +19,6 @@ export function SceneDefs() {
         <linearGradient id="sky-dusk" x1="0" y1="0" x2="0" y2="1">
           <stop offset="0" stopColor="#fbe3a6"/>
           <stop offset="1" stopColor="#f2a765"/>
-        </linearGradient>
-        <linearGradient id="sky-storm" x1="0" y1="0" x2="0" y2="1">
-          <stop offset="0" stopColor="#3f535d"/>
-          <stop offset="1" stopColor="#8aa2ac"/>
         </linearGradient>
       </defs>
     </svg>
