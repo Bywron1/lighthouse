@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { capitalise, DIRECTIONS, KEYS, neighbour, ROOMS, START_ROOM } from "./rooms";
+import { capitalise, DIRECTIONS, KEYS, move, neighbour, ROOMS, START_STATE } from "./rooms";
 import { SceneDefs, Scenes } from "./scenes";
 
 // Matches the CSS opacity transition on [data-fade]; skipped for reduced motion.
@@ -10,18 +10,18 @@ function fadeMs(): number {
 }
 
 export default function Game() {
-  // `current` drives the page colours and the map, which change straight away
+  // `game.room` drives the page colours and the map, which change straight away
   // so they blend during the fade. `shown` is the room's name, art, description
   // and exits, which swap while faded out.
-  const [current, setCurrent] = useState(START_ROOM);
-  const [shown, setShown] = useState(START_ROOM);
+  const [game, setGame] = useState(START_STATE);
+  const [shown, setShown] = useState(START_STATE.room);
   const [fading, setFading] = useState(false);
   const [message, setMessage] = useState("");
   const fadeTimer = useRef<number | undefined>(undefined);
 
   useEffect(() => {
-    document.body.dataset.room = current.art;
-  }, [current]);
+    document.body.dataset.room = game.room.art;
+  }, [game.room]);
 
   useEffect(() => {
     function onKeyDown(event: KeyboardEvent) {
@@ -29,13 +29,12 @@ export default function Game() {
       if (!dir) return;
       event.preventDefault();
 
-      const next = neighbour(current, dir);
-      if (!next) {
-        setMessage(current.blocked[dir] ?? "You can't go that way.");
-        return;
-      }
-      setCurrent(next);
-      setMessage("");
+      const result = move(game, dir);
+      setMessage(result.message);
+      if (result.state.room === game.room) return;
+
+      const next = result.state.room;
+      setGame(result.state);
       setFading(true);
       window.clearTimeout(fadeTimer.current);
       fadeTimer.current = window.setTimeout(() => {
@@ -46,7 +45,7 @@ export default function Game() {
 
     document.addEventListener("keydown", onKeyDown);
     return () => document.removeEventListener("keydown", onKeyDown);
-  }, [current]);
+  }, [game]);
 
   useEffect(() => () => window.clearTimeout(fadeTimer.current), []);
 
@@ -74,7 +73,7 @@ export default function Game() {
               className="map-cell"
               title={room.name}
               style={{ gridColumn: String(room.x + 1), gridRow: String(room.y + 1) }}
-              aria-current={room === current ? "location" : undefined}
+              aria-current={room === game.room ? "location" : undefined}
             >
               {capitalise(room.art)}
             </div>
