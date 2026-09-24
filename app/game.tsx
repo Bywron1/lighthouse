@@ -120,7 +120,10 @@ export default function Game() {
       <p className="message" aria-live="polite">
         {message}
       </p>
-      <p className="hint">Use the arrow keys to move.</p>
+      <p className="hint">
+        <span className="hint-keys">Use the arrow keys to move.</span>
+        <span className="hint-touch">Swipe the picture or tap the arrows to move.</span>
+      </p>
     </main>
   );
 }

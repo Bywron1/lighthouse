@@ -192,8 +192,11 @@ main.is-fading [data-fade] { opacity: 0; }
 .pad-left svg { transform: rotate(-90deg); }
 .pad-right svg { transform: rotate(90deg); }
 .pad-down svg { transform: rotate(180deg); }
+.hint-touch { display: none; }
 @media (pointer: coarse) {
   .pad { display: grid; }
+  .hint-keys { display: none; }
+  .hint-touch { display: inline; }
   /* The exits get their own line so the buttons and map fit side by side */
   .status { flex-wrap: wrap; }
   .status .exits { flex-basis: 100%; }
