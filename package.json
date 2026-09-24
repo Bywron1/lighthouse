@@ -2,7 +2,8 @@
   "name": "lighthouse",
   "private": true,
   "scripts": {
-    "build": "tsc"
+    "build": "tsc",
+    "build:site": "npm run build && rm -rf site && mkdir site && cp index.html site/ && cp -r dist site/"
   },
   "devDependencies": {
     "typescript": "^5.6.0"
