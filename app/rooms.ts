@@ -107,8 +107,11 @@ export interface MoveResult {
   message: string;
 }
 
-// The movement rules, with no browser needed.
-export function move(state: GameState, dir: Direction): MoveResult {
+// The movement rules, with no browser needed. `direction` indexes DIRECTIONS:
+// 0 up, 1 down, 2 left, 3 right.
+export function move(state: GameState, direction: number): MoveResult {
+  const dir = DIRECTIONS[direction];
+  if (!dir) return { state, message: "You can't go that way." };
   const next = neighbour(state.room, dir);
   if (!next) {
     return { state, message: state.room.blocked[dir] ?? "You can't go that way." };

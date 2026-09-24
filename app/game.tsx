@@ -29,7 +29,7 @@ export default function Game() {
       if (!dir) return;
       event.preventDefault();
 
-      const result = move(game, dir);
+      const result = move(game, DIRECTIONS.indexOf(dir));
       setMessage(result.message);
       if (result.state.room === game.room) return;
 
