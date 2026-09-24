@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { capitalise, type Direction, DIRECTIONS, KEYS, move, neighbour, ROOMS, START_STATE } from "./rooms";
 import { SceneDefs, Scenes } from "./scenes";
+import { swipeDirection } from "./swipe";
 
 // Matches the CSS opacity transition on [data-fade]; skipped for reduced motion.
 function fadeMs(): number {
@@ -18,6 +19,8 @@ export default function Game() {
   const [fading, setFading] = useState(false);
   const [message, setMessage] = useState("");
   const fadeTimer = useRef<number | undefined>(undefined);
+  // Where the current touch on the picture started.
+  const swipeStart = useRef<{ id: number; x: number; y: number } | null>(null);
 
   useEffect(() => {
     document.body.dataset.room = game.room.art;
@@ -53,6 +56,20 @@ export default function Game() {
 
   useEffect(() => () => window.clearTimeout(fadeTimer.current), []);
 
+  // Swipes on the picture move the player. Mouse drags are ignored.
+  function onPointerDown(event: React.PointerEvent) {
+    if (event.pointerType === "mouse") return;
+    swipeStart.current = { id: event.pointerId, x: event.clientX, y: event.clientY };
+  }
+
+  function onPointerUp(event: React.PointerEvent) {
+    const start = swipeStart.current;
+    swipeStart.current = null;
+    if (!start || start.id !== event.pointerId) return;
+    const dir = swipeDirection(event.clientX - start.x, event.clientY - start.y);
+    if (dir) go(dir);
+  }
+
   const exits = DIRECTIONS.filter((dir) => neighbour(shown, dir)).map(capitalise);
 
   return (
@@ -61,7 +78,13 @@ export default function Game() {
 
       <SceneDefs />
 
-      <figure className="scene" data-fade="">
+      <figure
+        className="scene"
+        data-fade=""
+        onPointerDown={onPointerDown}
+        onPointerUp={onPointerUp}
+        onPointerCancel={() => (swipeStart.current = null)}
+      >
         <Scenes art={shown.art} />
       </figure>
 

@@ -107,6 +107,13 @@ main.is-fading [data-fade] { opacity: 0; }
   border-radius: 8px;
   overflow: hidden;
   box-shadow: 0 0 0 4px rgba(255, 255, 255, 0.04);
+  /* Swipes on the picture move the player instead of scrolling the page.
+     Pinch-zoom still works where supported; Safari falls back to none. */
+  touch-action: none;
+  touch-action: pinch-zoom;
+  -webkit-user-select: none;
+  user-select: none;
+  -webkit-touch-callout: none;
 }
 .scene svg { display: block; width: 100%; height: auto; }
 .scene svg[hidden] { display: none; }
