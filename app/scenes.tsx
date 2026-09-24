@@ -167,6 +167,11 @@ function StairStep({ x, y, z }: { x: number; y: number; z: number }) {
   return <Block at={[x - 0.7, y - 0.7, z]} size={[1.4, 1.4, 0.3]} colours={["#5b6472", "#454d5a", "#333a45"]}/>;
 }
 
+// Three tall window panes along each of the lamp room's back walls, as
+// [start, end] positions along the wall.
+const LAMP_PANES = [[0.6, 2.9], [3.35, 5.65], [6.1, 8.4]];
+const LAMP_GLOW = project([4.5, 4.5, 2.6]);
+
 // Only the current room's scene is rendered.
 export function Scenes({ art }: { art: string }) {
   return (
@@ -196,31 +201,33 @@ export function Scenes({ art }: { art: string }) {
 
       {/* Lamp Room: bright, golden awe */}
       {art === "lamp" && (
-        <svg data-room="lamp" viewBox="0 0 320 180" role="img" aria-label="A great glass lens blazing with golden light in front of windows over a sunset sea">
-          <g filter="url(#sketch)" stroke="#3a220c" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
-            <rect x="0" y="0" width="320" height="110" fill="url(#sky-dusk)" stroke="none"/>
-            <rect x="0" y="110" width="320" height="40" fill="#b8683c" stroke="none"/>
-            <path d="M0 110 H320" fill="none"/>
-            <path d="M10 122 q10 -5 20 0 t20 0 M90 132 q10 -5 20 0 t20 0 M230 124 q10 -5 20 0 t20 0 M270 138 q10 -5 20 0" fill="none" stroke="#7a3f1f" strokeWidth="1.4"/>
-            <polygon points="160,80 0,30 0,120" fill="#fff2b0" opacity="0.5" stroke="none"/>
-            <polygon points="160,80 320,30 320,120" fill="#fff2b0" opacity="0.5" stroke="none"/>
-            <polygon points="160,80 0,30 0,120" fill="url(#hatch-gold)" opacity="0.5" stroke="none"/>
-            <polygon points="160,80 320,30 320,120" fill="url(#hatch-gold)" opacity="0.5" stroke="none"/>
-            <path d="M60 0 V150 M130 0 V28 M190 0 V28 M260 0 V150" fill="none"/>
-            <rect x="0" y="150" width="320" height="30" fill="#6b4a2a"/>
-            <rect x="0" y="150" width="320" height="30" fill="url(#woodgrain)" stroke="none"/>
-            <circle cx="160" cy="80" r="75" fill="url(#glow-lamp)" stroke="none"/>
-            <path d="M140 130 L180 130 L190 150 L130 150 Z" fill="#4a3a2a"/>
-            <ellipse cx="160" cy="80" rx="38" ry="52" fill="#ffe27a"/>
-            <g fill="none" strokeWidth="1.5">
-              <ellipse cx="160" cy="80" rx="28" ry="40"/>
-              <ellipse cx="160" cy="80" rx="18" ry="27"/>
-              <ellipse cx="160" cy="80" rx="8" ry="13" fill="#fffbe6"/>
-              <path d="M124 62 H196 M122 98 H198"/>
+        <svg data-room="lamp" viewBox="0 0 320 180" role="img" aria-label="A cut-away view of the lamp room: a great golden lens on a brass pedestal, blazing light towards tall windows over a sunset sea">
+          <rect width="320" height="180" fill="#2a1d08"/>
+          <RoomShell
+            floor={["#8a5a32", "#6b4a2a", "#4f341c"]}
+            backLeft={["#7a5a34", "#3f2c16", "#4a3418"]}
+            backRight={["#7a5a34", "#5a4020", "#3f2c16"]}
+          />
+          {[1.5, 3, 4.5, 6, 7.5].map((x) => (
+            <Line key={x} from={[x, 0, 0]} to={[x, ROOM, 0]} stroke="#6b4a2a"/>
+          ))}
+          {LAMP_PANES.map(([a, b]) => (
+            <g key={a}>
+              <Face corners={[[0, a, 1.4], [0, b, 1.4], [0, b, 5.8], [0, a, 5.8]]} fill="url(#sky-dusk)"/>
+              <Face corners={[[0, a, 1.4], [0, b, 1.4], [0, b, 2.2], [0, a, 2.2]]} fill="#b8683c"/>
+              <Face corners={[[a, 0, 1.4], [b, 0, 1.4], [b, 0, 5.8], [a, 0, 5.8]]} fill="url(#sky-dusk)"/>
+              <Face corners={[[a, 0, 1.4], [b, 0, 1.4], [b, 0, 2.2], [a, 0, 2.2]]} fill="#b8683c"/>
             </g>
-            <path d="M160 18 V6 M204 38 l9 -8 M116 38 l-9 -8" fill="none" stroke="#e8a93a" strokeWidth="1.8"/>
-          </g>
-          <rect width="320" height="180" filter="url(#grain)" opacity="0.18" style={{ mixBlendMode: "multiply" }}/>
+          ))}
+          <Face corners={[[4.5, 4.5, 3], [0, 0.8, 5.6], [0, 5, 1.6]]} fill="#fff2b0" opacity={0.4}/>
+          <Face corners={[[4.5, 4.5, 3], [0.8, 0, 5.6], [5, 0, 1.6]]} fill="#fff2b0" opacity={0.4}/>
+          <circle cx={LAMP_GLOW[0]} cy={LAMP_GLOW[1]} r="70" fill="url(#glow-lamp)"/>
+          <Block at={[3.2, 3.2, 0]} size={[2.6, 2.6, 1]} colours={["#8a6a40", "#5a4020", "#3f2c16"]}/>
+          <Cylinder at={[4.5, 4.5, 1]} r={1.2} h={3} colours={["#fffbe6", "#ffe27a", "#f2c14e"]}/>
+          {[1.8, 2.5, 3.2].map((z) => (
+            <Band key={z} at={[4.5, 4.5, 0]} r={1.2} from={z} to={z + 0.15} fill="#e8a93a"/>
+          ))}
+          <Cylinder at={[4.5, 4.5, 4]} r={0.7} h={0.4} colours={["#8a6a40", "#5a4020", "#3f2c16"]}/>
         </svg>
       )}
 
