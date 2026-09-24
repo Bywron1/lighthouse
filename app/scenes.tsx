@@ -66,38 +66,131 @@ export function SceneDefs() {
   );
 }
 
+// Isometric projection: x runs down to the right, y runs down to the left and
+// z runs straight up. One unit is U pixels along each axis.
+const U = 10;
+const ORIGIN_X = 160;
+const ORIGIN_Y = 78;
+
+type Point = [number, number, number];
+// Colours for a solid's top, its front-left side and its front-right side.
+type Colours = [string, string, string];
+
+function round(n: number): number {
+  return Math.round(n * 100) / 100;
+}
+
+function project([x, y, z]: Point): [number, number] {
+  return [round(ORIGIN_X + (x - y) * U), round(ORIGIN_Y + ((x + y) * U) / 2 - z * U)];
+}
+
+// A flat shape in the scene, such as a window on a wall or light on the floor.
+function Face({ corners, fill, opacity }: { corners: Point[]; fill: string; opacity?: number }) {
+  const points = corners.map((corner) => project(corner).join(",")).join(" ");
+  // A same-colour outline closes the hairline gaps between neighbouring faces.
+  return opacity === undefined
+    ? <polygon points={points} fill={fill} stroke={fill} strokeWidth="0.6" strokeLinejoin="round"/>
+    : <polygon points={points} fill={fill} opacity={opacity}/>;
+}
+
+function Line({ from, to, stroke, width = 0.8 }: { from: Point; to: Point; stroke: string; width?: number }) {
+  const [x1, y1] = project(from);
+  const [x2, y2] = project(to);
+  return <line x1={x1} y1={y1} x2={x2} y2={y2} stroke={stroke} strokeWidth={width}/>;
+}
+
+// A box with its back, bottom corner at `at`.
+function Block({ at: [x, y, z], size: [w, d, h], colours: [top, left, right] }: { at: Point; size: Point; colours: Colours }) {
+  return (
+    <g>
+      <Face corners={[[x, y + d, z], [x + w, y + d, z], [x + w, y + d, z + h], [x, y + d, z + h]]} fill={left}/>
+      <Face corners={[[x + w, y, z], [x + w, y + d, z], [x + w, y + d, z + h], [x + w, y, z + h]]} fill={right}/>
+      <Face corners={[[x, y, z + h], [x + w, y, z + h], [x + w, y + d, z + h], [x, y + d, z + h]]} fill={top}/>
+    </g>
+  );
+}
+
+// An upright cylinder standing on the centre point `at`. The side's right half
+// takes the shade colour.
+function Cylinder({ at, r, h, colours: [top, side, shade] }: { at: Point; r: number; h: number; colours: Colours }) {
+  const [cx, cy] = project(at);
+  const rx = round(r * U * Math.SQRT2);
+  const ry = round(rx / 2);
+  const t = round(cy - h * U);
+  return (
+    <g>
+      <path d={`M${cx - rx} ${t} V${cy} A${rx} ${ry} 0 0 0 ${cx + rx} ${cy} V${t} Z`} fill={side}/>
+      <path d={`M${cx} ${cy + ry} A${rx} ${ry} 0 0 0 ${cx + rx} ${cy} V${t} L${cx} ${t + ry} Z`} fill={shade}/>
+      <ellipse cx={cx} cy={t} rx={rx} ry={ry} fill={top}/>
+    </g>
+  );
+}
+
+// A stripe round the front of an upright cylinder, between heights `from` and `to`.
+function Band({ at, r, from, to, fill }: { at: Point; r: number; from: number; to: number; fill: string }) {
+  const [cx, cy] = project(at);
+  const rx = round(r * U * Math.SQRT2);
+  const ry = round(rx / 2);
+  const top = round(cy - to * U);
+  const bottom = round(cy - from * U);
+  return <path d={`M${cx - rx} ${top} A${rx} ${ry} 0 0 0 ${cx + rx} ${top} V${bottom} A${rx} ${ry} 0 0 1 ${cx - rx} ${bottom} Z`} fill={fill}/>;
+}
+
+// Indoor rooms are ROOM units square, with the front two walls cut away.
+const ROOM = 9;
+const WALL_HEIGHT = 6.5;
+const WALL = 0.6;
+
+// The floor and the two back walls. The back-right wall's inside is its
+// front-left side, and the back-left wall's inside is its front-right side.
+function RoomShell({ floor, backLeft, backRight }: { floor: Colours; backLeft: Colours; backRight: Colours }) {
+  return (
+    <g>
+      <Block at={[-WALL, -WALL, -WALL]} size={[ROOM + WALL, ROOM + WALL, WALL]} colours={floor}/>
+      <Block at={[-WALL, -WALL, 0]} size={[ROOM + WALL, WALL, WALL_HEIGHT]} colours={backRight}/>
+      <Block at={[-WALL, 0, 0]} size={[WALL, ROOM, WALL_HEIGHT]} colours={backLeft}/>
+    </g>
+  );
+}
+
+// Ten iron steps winding up round the stair's column, starting at the front.
+const STAIR_STEPS = Array.from({ length: 10 }, (_, i) => {
+  const angle = Math.PI / 4 - (i * 2 * Math.PI) / 9;
+  return { x: 4.5 + 1.6 * Math.cos(angle), y: 4.5 + 1.6 * Math.sin(angle), z: i * 0.6 };
+});
+// Steps behind the column are drawn before it, and steps in front after it.
+const byDepth = (a: { x: number; y: number }, b: { x: number; y: number }) => a.x + a.y - (b.x + b.y);
+const STAIR_BACK = STAIR_STEPS.filter((step) => step.x + step.y < ROOM).sort(byDepth);
+const STAIR_FRONT = STAIR_STEPS.filter((step) => step.x + step.y >= ROOM).sort(byDepth);
+
+function StairStep({ x, y, z }: { x: number; y: number; z: number }) {
+  return <Block at={[x - 0.7, y - 0.7, z]} size={[1.4, 1.4, 0.3]} colours={["#5b6472", "#454d5a", "#333a45"]}/>;
+}
+
 // Only the current room's scene is rendered.
 export function Scenes({ art }: { art: string }) {
   return (
     <>
       {/* Spiral Stair: cold, lonely stone */}
       {art === "stair" && (
-        <svg data-room="stair" viewBox="0 0 320 180" role="img" aria-label="Iron steps spiralling around a stone column in a cold, dim stairwell lit by one narrow window">
-          <g filter="url(#sketch)" stroke="#161b24" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
-            <rect x="0" y="0" width="320" height="180" fill="#7f8a99" stroke="none"/>
-            <rect x="0" y="0" width="320" height="180" fill="url(#bricks)" stroke="none"/>
-            <polygon points="270,60 288,60 200,180 110,180" fill="#e9f1f7" opacity="0.3" stroke="none"/>
-            <rect x="270" y="30" width="18" height="70" rx="9" fill="#e9f1f7"/>
-            <rect x="145" y="-5" width="30" height="190" fill="#aab2bd"/>
-            <rect x="163" y="-5" width="12" height="190" fill="url(#hatch)" stroke="none"/>
-            <g fill="#454d5a">
-              <path d="M175 160 L235 154 L235 166 L175 170 Z"/>
-              <path d="M145 145 L85 139 L85 151 L145 155 Z"/>
-              <path d="M175 130 L235 124 L235 136 L175 140 Z"/>
-              <path d="M145 115 L85 109 L85 121 L145 125 Z"/>
-              <path d="M175 100 L235 94 L235 106 L175 110 Z"/>
-              <path d="M145 85 L85 79 L85 91 L145 95 Z"/>
-              <path d="M175 70 L235 64 L235 76 L175 80 Z"/>
-              <path d="M145 55 L85 49 L85 61 L145 65 Z"/>
-              <path d="M175 40 L235 34 L235 46 L175 50 Z"/>
-              <path d="M145 25 L85 19 L85 31 L145 35 Z"/>
-              <path d="M175 10 L235 4 L235 16 L175 20 Z"/>
+        <svg data-room="stair" viewBox="0 0 320 180" role="img" aria-label="A cut-away view of a cold stone stairwell, with iron steps spiralling round a central column and one narrow window letting in pale light">
+          <rect width="320" height="180" fill="#1b2230"/>
+          <RoomShell
+            floor={["#6b7584", "#4a525f", "#373e49"]}
+            backLeft={["#aab2bd", "#4f5866", "#66707e"]}
+            backRight={["#aab2bd", "#7f8a99", "#4f5866"]}
+          />
+          {[1.3, 2.6, 3.9, 5.2].map((z) => (
+            <g key={z}>
+              <Line from={[0, 0, z]} to={[0, ROOM, z]} stroke="#56606d"/>
+              <Line from={[0, 0, z]} to={[ROOM, 0, z]} stroke="#6b7584"/>
             </g>
-            <polyline fill="none" strokeWidth="1.6" points="235,132 85,117 235,102 85,87 235,72 85,57 235,42 85,27 235,12 85,-3"/>
-            <path d="M40 150 q-6 10 2 20 M52 140 q-4 8 1 16" fill="none" stroke="#56606d" strokeWidth="1.2"/>
-          </g>
-          <rect width="320" height="180" filter="url(#grain)" opacity="0.3" style={{ mixBlendMode: "multiply" }}/>
-          <rect width="320" height="180" fill="url(#vignette-cold)"/>
+          ))}
+          <Face corners={[[6, 0, 3], [7.2, 0, 3], [7.2, 0, 5.4], [6, 0, 5.4]]} fill="#e9f1f7"/>
+          <Face corners={[[5.4, 1.5, 0], [6.8, 1.5, 0], [8, 6.5, 0], [6.2, 6.5, 0]]} fill="#e9f1f7" opacity={0.18}/>
+          {STAIR_BACK.map((step) => <StairStep key={step.z} {...step}/>)}
+          <Cylinder at={[4.5, 4.5, 0]} r={0.8} h={13} colours={["#aab2bd", "#aab2bd", "#7f8a99"]}/>
+          {STAIR_FRONT.map((step) => <StairStep key={step.z} {...step}/>)}
         </svg>
       )}
 
